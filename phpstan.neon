@@ -1,0 +1,12 @@
+parameters:
+    paths:
+        - app
+
+    level: max
+
+    checkUninitializedProperties: true
+    checkModelProperties: true
+    checkTooWideReturnTypesInProtectedAndPublicMethods: true
+    checkFunctionNameCase: true
+    checkInternalClassCaseSensitivity: true
+    checkMissingOverrideMethodAttribute: true
