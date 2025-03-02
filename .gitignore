@@ -1,11 +1,21 @@
-/.phpunit.cache
+# PHP Unit
+.phpunit.cache
+.phpunit.result.cache
 
+# Storage
 /storage/*.key
 /storage/pail
+
+# Composer
 /vendor
 
+# Environment
 .env
-.phpunit.result.cache
-/auth.json
+auth.json
+
+# IDE
 /.idea
 /.vscode
+
+# Docker
+compose.override.yml
