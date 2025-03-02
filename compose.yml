@@ -1,0 +1,69 @@
+x-common-env: &common-env
+  APP_ENV: local
+  APP_DEBUG: true
+  APP_KEY: base64:JiHZRqgo/WHAfi/2a6nYLVr2cDHJy8MCxczOGAs4dKE=
+  APP_NAME: 'Laravel API Template'
+  LOG_CHANNEL: stack
+  DB_PASSWORD: password
+
+x-common-worker-config: &common-worker-config
+  extends: app
+  depends_on:
+    app:
+      condition: service_healthy
+  volumes:
+    - ./:/var/www/html
+  environment:
+    <<: *common-env
+
+services:
+
+  app:
+    image: ivanvasechko/laravel-api-template
+    build:
+      context: .
+      dockerfile: .docker/php/Dockerfile
+      target: development
+    ports:
+      - "80"
+    environment:
+      <<: *common-env
+    volumes:
+      - .:/var/www/html
+      - ./.docker/php/error_reporting.ini:/usr/local/etc/php/conf.d/error_reporting.ini
+      - storage-volume:/var/www/html/storage
+      - bootstrap-cache-volume:/var/www/html/bootstrap/cache
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "php", "artisan", "schedule:list" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:17.4-alpine
+    ports:
+      - "5432"
+    environment:
+      POSTGRES_DB: laravel_template
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST_AUTH_METHOD: md5
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U admin -d laravel_template" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  some-worker:
+    <<: *common-worker-config
+    entrypoint: php artisan queue:listen database --queue=some-queue
+
+volumes:
+  postgres-data:
+  storage-volume:
+  bootstrap-cache-volume:
