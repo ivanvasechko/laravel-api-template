@@ -37,13 +37,27 @@ RUN composer install --no-dev --no-scripts --no-autoloader --no-progress --no-in
 
 # Development
 FROM base AS development
+
+# PHP ini configuration
 RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
+
+# Install PCOV for code coverage
+RUN pecl install pcov
+RUN docker-php-ext-enable pcov
+
+# Copy application code and set permissions
 COPY . .
 RUN chown -R www-data:www-data storage bootstrap/cache
+
+# Install composer dependencies
 RUN composer install --no-progress --no-interaction
 
 # Production
 FROM base
+
+# Copy application code and set permissions
 COPY . .
 RUN chown -R www-data:www-data storage bootstrap/cache
+
+# Install composer dependencies
 RUN composer install --no-progress --no-interaction --optimize-autoloader
