@@ -1,0 +1,26 @@
+x-secrets-env: &secrets-env
+  SECRET_KEY: secret
+
+x-rewrite-env: &rewrite-env
+  <<: *secrets-env
+  LOG_CHANNEL: daily
+
+x-common-worker-config: &common-worker-config
+  environment:
+    <<: *rewrite-env
+
+services:
+  app:
+    ports:
+      - "8080:80"
+    environment:
+      <<: *rewrite-env
+
+  postgres:
+    ports:
+      - "5432:5432"
+    environment:
+      <<: *rewrite-env
+
+  some-worker:
+    <<: *common-worker-config
