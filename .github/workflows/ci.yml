@@ -12,6 +12,7 @@ env:
   APP_KEY: "base64:JiHZRqgo/WHAfi/2a6nYLVr2cDHJy8MCxczOGAs4dKE="
   APP_NAME: "Laravel API Template"
   LOG_CHANNEL: "stack"
+  DB_HOST: "0.0.0.0"
   DB_PASSWORD: "password"
 
 jobs:
