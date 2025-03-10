@@ -1,0 +1,54 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+env:
+  APP_ENV: "local"
+  APP_DEBUG: true
+  APP_KEY: "base64:JiHZRqgo/WHAfi/2a6nYLVr2cDHJy8MCxczOGAs4dKE="
+  APP_NAME: "Laravel API Template"
+  LOG_CHANNEL: "stack"
+  DB_PASSWORD: "root"
+
+jobs:
+  code-quality:
+    name: Code style validation and code static analysis
+    runs-on: ubuntu-latest
+    env:
+      CACHE_DRIVER: file
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: pdo, pdo_mysql, pcntl, intl, zip, bcmath
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Validate composer
+        run: composer validate
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
+
+      - name: Run Pint To Validate Code Style
+        run: composer pint-test
+
+      - name: Run PHPStan To Analyse The Code
+        run: composer phpstan
+
+      - name: Run Pest Type Coverage
+        run: composer type-coverage
