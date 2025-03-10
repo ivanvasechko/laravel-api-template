@@ -13,6 +13,9 @@ env:
   APP_NAME: "Laravel API Template"
   LOG_CHANNEL: "stack"
   DB_HOST: "0.0.0.0"
+  DB_PORT: "5432"
+  DB_DATABASE: "laravel_template"
+  DB_USERNAME: "admin"
   DB_PASSWORD: "password"
 
 jobs:
@@ -64,7 +67,7 @@ jobs:
       postgres:
         image: postgres:17.4-alpine
         ports:
-          - "5432"
+          - "5432:5432"
         env:
           POSTGRES_DB: laravel_template
           POSTGRES_USER: admin
