@@ -77,7 +77,7 @@
             "vendor/bin/pest --parallel --coverage-html reports/coverage"
         ],
         "test-coverage-ci": [
-            "vendor/bin/pest --parallel --coverage-cobertura=coverage.cobertura.xml --coverage-xml=build/coverage/coverage-xml --log-junit=build/coverage/junit.xml"
+            "vendor/bin/pest --parallel --min=50 --coverage-cobertura=coverage.cobertura.xml --coverage-xml=build/coverage/coverage-xml --log-junit=build/coverage/junit.xml"
         ],
         "type-coverage": [
             "vendor/bin/pest --type-coverage --min=100"
