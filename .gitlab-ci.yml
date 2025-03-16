@@ -39,7 +39,7 @@ services:
     bcmath
 
 code-quality:
-  stage: code-quality
+  stage: test
   before_script:
     - *php-setup
     - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
