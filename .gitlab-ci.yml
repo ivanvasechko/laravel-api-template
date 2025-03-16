@@ -1,0 +1,73 @@
+image: php:8.4
+
+variables:
+  APP_ENV: "local"
+  APP_DEBUG: "true"
+  APP_KEY: "base64:JiHZRqgo/WHAfi/2a6nYLVr2cDHJy8MCxczOGAs4dKE="
+  APP_NAME: "Laravel API Template"
+  LOG_CHANNEL: "stack"
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  DB_DATABASE: "laravel_template"
+  DB_USERNAME: "admin"
+  DB_PASSWORD: "password"
+  CACHE_DRIVER: "file"
+  POSTGRES_DB: ${DB_DATABASE}
+  POSTGRES_USER: ${DB_USERNAME}
+  POSTGRES_PASSWORD: ${DB_PASSWORD}
+  COMPOSER_HOME: ${CI_PROJECT_DIR}/.composer
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .composer/cache/files
+
+services:
+  - postgres:17.4-alpine
+
+.php-setup: &php-setup |
+  apt-get update && apt-get install -y \
+    git \
+    unzip \
+    libpq-dev \
+    libzip-dev \
+    && docker-php-ext-install \
+    pdo \
+    pdo_pgsql \
+    pcntl \
+    zip \
+    bcmath
+
+code-quality:
+  stage: test
+  before_script:
+    - *php-setup
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    - composer validate
+    - composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
+  script:
+    - composer pint-test
+    - composer phpstan
+    - composer type-coverage
+
+tests:
+  stage: test
+  coverage: '/^\s*Lines:\s*\d+.\d+\%/'
+  before_script:
+    - *php-setup
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    - composer validate
+    - composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
+    - php artisan migrate --seed
+    - php artisan config:cache
+  script:
+    - composer test-coverage-ci
+    - composer test-mutate
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.cobertura.xml
+    paths:
+      - coverage.cobertura.xml
+    expire_in: 1 week
