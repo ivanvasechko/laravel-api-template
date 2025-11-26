@@ -1,63 +1,30 @@
-FROM php:8.5-apache AS base
+FROM dunglas/frankenphp:1-php8.5-alpine AS base
 
-# Install dependencies for PHP extensions
-RUN apt-get update && apt-get install -y \
-    # for PHP zip extension
-    libzip-dev \
-    zip \
-    # for PHP intl extension
-    libicu-dev \
-    # for PHP pdo_pgsql extension
-    libpq-dev \
-    # for PHP mbstring extension
-    libonig-dev \
-    # for PHP xml extension
-    libxml2-dev
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+ENV SERVER_NAME=:80
 
-# Install PHP extensions
-RUN docker-php-ext-install -j$(nproc) pdo pdo_pgsql zip intl mbstring xml
+RUN install-php-extensions \
+    pdo_pgsql pdo_sqlite zip intl mbstring xml
 
-## Configure Apache
-RUN a2enmod rewrite
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
-RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
+WORKDIR /app
 
-# Install and configure Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-ENV COMPOSER_ALLOW_SUPERUSER=1
 
-WORKDIR /var/www/html
-
-# Install composer dependencies
-COPY composer.* .
-RUN composer install --no-dev --no-scripts --no-autoloader --no-progress --no-interaction
-
-# Development
-FROM base AS development
-
-# PHP ini configuration
-RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
-
-# Install PCOV for code coverage
-RUN pecl install pcov
-RUN docker-php-ext-enable pcov
-
-# Copy application code and set permissions
-COPY . .
-RUN chown -R www-data:www-data storage bootstrap/cache
-
-# Install composer dependencies
+COPY . /app
 RUN composer install --no-progress --no-interaction
 
-# Production
-FROM base
+# Development stage
+FROM base AS development
 
-# Copy application code and set permissions
-COPY . .
-RUN chown -R www-data:www-data storage bootstrap/cache
+RUN install-php-extensions pcov
 
-# Install composer dependencies
+# Production stage
+FROM base AS production
+
+# Copy app and finalize install
+COPY . /app
 RUN composer install --no-progress --no-interaction --optimize-autoloader
+
+# Reference: https://laravel.com/docs/12.x/deployment#directory-permissions
+RUN mkdir -p /app/storage/framework/views && \
+    chown -R www-data:www-data /app/storage /app/bootstrap/cache && \
+    chmod -R 775 /app/storage /app/bootstrap/cache

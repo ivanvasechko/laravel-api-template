@@ -12,7 +12,7 @@ x-common-worker-config: &common-worker-config
     app:
       condition: service_healthy
   volumes:
-    - ./:/var/www/html
+    - ./:/app
   environment:
     <<: *common-env
 
@@ -28,11 +28,11 @@ services:
       - "80"
     environment:
       <<: *common-env
+      CADDY_GLOBAL_OPTIONS: "auto_https off"
     volumes:
-      - .:/var/www/html
-      - ./.docker/php/error_reporting.ini:/usr/local/etc/php/conf.d/error_reporting.ini
-      - storage-volume:/var/www/html/storage
-      - bootstrap-cache-volume:/var/www/html/bootstrap/cache
+      - ./.docker/frankenphp/Caddyfile:/etc/caddy/Caddyfile
+      - storage-volume:/app/storage
+      - bootstrap-cache-volume:/app/bootstrap/cache
     depends_on:
       postgres:
         condition: service_healthy
