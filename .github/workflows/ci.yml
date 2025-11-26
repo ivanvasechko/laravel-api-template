@@ -30,7 +30,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.4"
+          php-version: "8.5"
           extensions: pdo, pdo_mysql, pcntl, intl, zip, bcmath
 
       - name: Get Composer Cache Directory
@@ -58,7 +58,7 @@ jobs:
       - name: Run Pest Type Coverage
         run: composer type-coverage
   test:
-    name: Run tests (PHP 8.4)
+    name: Run tests (PHP 8.5)
     permissions:
       pull-requests: write
       contents: read
@@ -80,7 +80,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.4"
+          php-version: "8.5"
           extensions: pdo, pdo_pgsql, pcntl, intl, zip, bcmath
 
       - name: Get Composer Cache Directory
