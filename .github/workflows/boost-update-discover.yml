@@ -1,0 +1,87 @@
+name: Refresh Laravel Boost guidance
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    branches: [ main ]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: boost-update-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  refresh-boost-guidance:
+    name: Run boost:update --discover
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      startsWith(github.event.pull_request.head.ref, 'dependabot/composer/') &&
+      contains(github.event.pull_request.title, 'Bump laravel/boost ')
+    runs-on: ubuntu-latest
+    env:
+      APP_ENV: local
+      APP_DEBUG: true
+      APP_KEY: base64:QWJjZEVmR0hpSmtMbU5vUHFTdFV2V3hZejAxMjM0NTY3ODk=
+      APP_NAME: Laravel API Template
+      LOG_CHANNEL: stack
+
+    steps:
+      - name: Checkout Dependabot branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Ensure PR only changes Composer files
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          changed_files=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+
+          printf '%s\n' "$changed_files"
+
+          if printf '%s\n' "$changed_files" | grep -Ev '^(composer\.json|composer\.lock)$' >/dev/null; then
+            echo 'Unexpected files were changed in this Dependabot PR.'
+            exit 1
+          fi
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: pdo, pdo_pgsql, pcntl, intl, zip, bcmath
+          coverage: none
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v5
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
+
+      - name: Refresh Laravel Boost guidance
+        run: php artisan boost:update --discover --no-interaction
+
+      - name: Commit refreshed Boost guidance
+        run: |
+          if [[ -z "$(git status --porcelain)" ]]; then
+            echo 'No Boost guidance changes detected.'
+            exit 0
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'chore: refresh Laravel Boost guidance'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
