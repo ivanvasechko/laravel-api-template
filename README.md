@@ -15,11 +15,17 @@ release as of November 19, 2026. CI reads `.php-version`; the Docker build
 checks that its runtime matches that file. When updating PHP, update
 `.php-version` and the FrankenPHP image tag in
 `.docker/php/Dockerfile` together. Rebuild with `docker compose build --pull`
-and run the project quality checks before merging.
+and run the project quality checks before merging. Use
+`docker compose build --pull --no-cache` to refresh Alpine security packages
+even when the upstream image tag has not changed.
 
 CI also audits locked Composer dependencies, including development packages.
 Docker uses version tags rather than SHA digests and applies available Alpine
 security updates during each uncached build.
+
+PostgreSQL stays on major version 17 and uses 17.12 in both Compose and CI.
+Both build `.docker/postgres/Dockerfile` to apply available Alpine security
+patches. Dependabot monitors both Dockerfiles for version updates.
 
 ## Running the application
 

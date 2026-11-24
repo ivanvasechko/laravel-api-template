@@ -67,19 +67,37 @@ jobs:
       pull-requests: write
       contents: read
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:17.4-alpine
-        ports:
-          - "5432:5432"
-        env:
-          POSTGRES_DB: laravel_template
-          POSTGRES_USER: admin
-          POSTGRES_PASSWORD: password
-          POSTGRES_HOST_AUTH_METHOD: md5
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - uses: actions/checkout@v7
+
+      - name: Build patched PostgreSQL image
+        run: docker build --pull --no-cache -t laravel-api-template-postgres:17.12 -f .docker/postgres/Dockerfile .
+
+      - name: Start PostgreSQL
+        run: |
+          docker run --detach --name laravel-template-postgres \
+            --publish 5432:5432 \
+            --env POSTGRES_DB=laravel_template \
+            --env POSTGRES_USER=admin \
+            --env POSTGRES_PASSWORD=password \
+            --env POSTGRES_HOST_AUTH_METHOD=md5 \
+            --health-cmd 'pg_isready -U admin -d laravel_template' \
+            --health-interval 2s --health-timeout 5s --health-retries 15 \
+            laravel-api-template-postgres:17.12
+
+          for attempt in {1..30}; do
+            status=$(docker inspect --format '{{.State.Health.Status}}' laravel-template-postgres)
+            if [[ "$status" == 'healthy' ]]; then
+              exit 0
+            fi
+            if [[ "$status" == 'unhealthy' ]]; then
+              break
+            fi
+            sleep 2
+          done
+
+          docker logs laravel-template-postgres
+          exit 1
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2

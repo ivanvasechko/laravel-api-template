@@ -28,3 +28,12 @@ updates:
     labels:
       - "dependencies"
       - "docker"
+
+  - package-ecosystem: "docker"
+    directory: "/.docker/postgres"
+    schedule:
+      interval: "weekly"
+    target-branch: "main"
+    labels:
+      - "dependencies"
+      - "docker"
