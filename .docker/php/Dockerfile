@@ -1,4 +1,6 @@
-FROM dunglas/frankenphp:1-php8.5-alpine AS base
+FROM dunglas/frankenphp:1.14.0-php8.5.13-alpine AS base
+
+RUN apk upgrade --no-cache
 
 ENV SERVER_NAME=:80
 
@@ -7,15 +9,16 @@ RUN install-php-extensions \
 
 WORKDIR /app
 
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2.11.2 /usr/bin/composer /usr/bin/composer
 
 COPY . /app
+RUN php -r '$expected = trim(file_get_contents(".php-version")); if (PHP_VERSION !== $expected) { fwrite(STDERR, "Expected PHP $expected, got " . PHP_VERSION . PHP_EOL); exit(1); }'
 RUN composer install --no-progress --no-interaction
 
 # Development stage
 FROM base AS development
 
-RUN install-php-extensions pcov
+RUN install-php-extensions pcov pcntl
 
 # Production stage
 FROM base AS production
