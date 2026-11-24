@@ -1,4 +1,4 @@
-FROM dunglas/frankenphp:1-php8.5-alpine AS base
+FROM dunglas/frankenphp:1.14.0-php8.5.13-alpine@sha256:45b44e677ae199015523e2e4d4a3543cf852d15e9c2aa6dca0f441a959f749dc AS base
 
 ENV SERVER_NAME=:80
 
@@ -10,12 +10,13 @@ WORKDIR /app
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 COPY . /app
+RUN php -r 'exit(PHP_VERSION === trim(file_get_contents(".php-version")) ? 0 : 1);'
 RUN composer install --no-progress --no-interaction
 
 # Development stage
 FROM base AS development
 
-RUN install-php-extensions pcov
+RUN install-php-extensions pcov pcntl
 
 # Production stage
 FROM base AS production
