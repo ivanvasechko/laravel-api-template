@@ -1,4 +1,6 @@
-FROM dunglas/frankenphp:1.14.0-php8.5.13-alpine@sha256:45b44e677ae199015523e2e4d4a3543cf852d15e9c2aa6dca0f441a959f749dc AS base
+FROM dunglas/frankenphp:1.14.0-php8.5.13-alpine AS base
+
+RUN apk upgrade --no-cache
 
 ENV SERVER_NAME=:80
 
@@ -7,7 +9,7 @@ RUN install-php-extensions \
 
 WORKDIR /app
 
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2.11.2 /usr/bin/composer /usr/bin/composer
 
 COPY . /app
 RUN php -r 'exit(PHP_VERSION === trim(file_get_contents(".php-version")) ? 0 : 1);'
