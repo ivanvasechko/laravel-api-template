@@ -27,6 +27,20 @@ PostgreSQL stays on major version 17 and uses 17.12 in both Compose and CI.
 Both build `.docker/postgres/Dockerfile` to apply available Alpine security
 patches. Dependabot monitors both Dockerfiles for version updates.
 
+### Container audit limits (November 24, 2026)
+
+Trivy reports no Alpine package vulnerabilities after these updates.
+It still flags three advisories in FrankenPHP's embedded `go-jose/v3`
+(CVE-2026-116585, CVE-2026-116586, CVE-2026-116587), with no fixed v3
+version reported. These remain upstream follow-ups; the container scan
+is not completely clean. A `govulncheck` binary scan reported no findings,
+but that does not establish that every scanner advisory is inapplicable.
+
+Trivy also flags Go module/compiler advisories in PostgreSQL's `gosu` helper.
+The identical upstream gosu 1.20 binary reports zero affected symbols with
+`govulncheck`. Its [upstream security policy](https://github.com/tianon/gosu/blob/master/SECURITY.md)
+explains why unused vulnerable Go interfaces do not warrant rebuilding gosu.
+
 ## Running the application
 
 To run the application, follow the steps below:

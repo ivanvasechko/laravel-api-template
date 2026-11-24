@@ -74,6 +74,8 @@ jobs:
         run: php artisan boost:update --discover --no-interaction
 
       - name: Commit refreshed Boost guidance
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
           if [[ -z "$(git status --porcelain)" ]]; then
             echo 'No Boost guidance changes detected.'
@@ -84,4 +86,4 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
           git commit -m 'chore: refresh Laravel Boost guidance'
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          git push origin "HEAD:$HEAD_REF"
