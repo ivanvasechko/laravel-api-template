@@ -12,7 +12,7 @@ WORKDIR /app
 COPY --from=composer:2.11.2 /usr/bin/composer /usr/bin/composer
 
 COPY . /app
-RUN php -r 'exit(PHP_VERSION === trim(file_get_contents(".php-version")) ? 0 : 1);'
+RUN php -r '$expected = trim(file_get_contents(".php-version")); if (PHP_VERSION !== $expected) { fwrite(STDERR, "Expected PHP $expected, got " . PHP_VERSION . PHP_EOL); exit(1); }'
 RUN composer install --no-progress --no-interaction
 
 # Development stage
